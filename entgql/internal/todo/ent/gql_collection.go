@@ -326,6 +326,7 @@ func (gr *GroupQuery) collectField(ctx context.Context, op *graphql.OperationCon
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
+
 			pager, err := newUserPager(args.opts)
 			if err != nil {
 				return fmt.Errorf("create new pager in path %q: %w", path, err)
@@ -473,6 +474,7 @@ func (t *TodoQuery) collectField(ctx context.Context, op *graphql.OperationConte
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
+
 			pager, err := newTodoPager(args.opts)
 			if err != nil {
 				return fmt.Errorf("create new pager in path %q: %w", path, err)
@@ -638,6 +640,16 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
+
+			if err := validateFirstLastMax(args.first, args.last, 50); err != nil {
+				return err
+			}
+
+			if args.first == nil && args.last == nil {
+				args.first = new(int)
+				*args.first = 25
+			}
+
 			pager, err := newGroupPager(args.opts)
 			if err != nil {
 				return fmt.Errorf("create new pager in path %q: %w", path, err)
@@ -725,6 +737,7 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
+
 			pager, err := newUserPager(args.opts)
 			if err != nil {
 				return fmt.Errorf("create new pager in path %q: %w", path, err)
@@ -812,6 +825,7 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
+
 			pager, err := newFriendshipPager(args.opts)
 			if err != nil {
 				return fmt.Errorf("create new pager in path %q: %w", path, err)

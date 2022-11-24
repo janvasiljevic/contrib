@@ -49,6 +49,14 @@ type (
 		QueryField *FieldConfig `json:"QueryField,omitempty"`
 		// MutationInputs defines the input types for the mutation.
 		MutationInputs []MutationConfig `json:"MutationInputs,omitempty"`
+		// RelayPaginationConfig defines the default value for the "first" argument in relay
+		// pagination and maximum value for the "first" or "last" argument.
+		RelayPaginationConfig RelayPaginationArgs `json:"RelayPaginationConfig"`
+	}
+
+	RelayPaginationArgs struct {
+		DefaultFirst *int `json:"DefaultFirst"`
+		Limit        *int `json:"Limit"`
 	}
 
 	// Directive to apply on the field/type.
@@ -274,6 +282,32 @@ func RelayConnection() Annotation {
 	return Annotation{RelayConnection: true}
 }
 
+// RelayPaginationConfig returns an annotation that limits the maximum number of nodes that can be
+// returned in a single page and sets the default number of nodes to return in a single page.
+//
+// For example: to limit the maximum number of nodes to 100 and set the default number of nodes to 10:
+//
+//	func (Todo) Annotations() []schema.Annotation {
+//		return []schema.Annotation{
+//			entgql.RelayPaginationConfig(10, 100),
+//		}
+//	}
+//
+// The generated GraphQL pagination arguments will now have additional comments and the queries
+// will be limited to 100 nodes:
+//
+// """Returns the first _n_ elements from the list. Defaults to 10 if last is not specified. Maximum value: 100."""
+// first: Int
+//
+// """Returns the last _n_ elements from the list. Maximum value: 100."""
+// last: Int
+func RelayPaginationConfig(defaultFirst, limit int) Annotation {
+	return Annotation{RelayPaginationConfig: RelayPaginationArgs{
+		DefaultFirst: &defaultFirst,
+		Limit:        &limit,
+	}}
+}
+
 // Implements returns an Implements annotation.
 // The Implements() annotation is used to
 // add implements interfaces to a GraphQL type.
@@ -427,6 +461,12 @@ func (a Annotation) Merge(other schema.Annotation) schema.Annotation {
 	}
 	if ant.RelayConnection {
 		a.RelayConnection = true
+	}
+	if ant.RelayPaginationConfig.Limit != nil && ant.RelayPaginationConfig.DefaultFirst != nil {
+		a.RelayPaginationConfig = RelayPaginationArgs{
+			DefaultFirst: ant.RelayPaginationConfig.DefaultFirst,
+			Limit:        ant.RelayPaginationConfig.Limit,
+		}
 	}
 	if len(ant.Implements) > 0 {
 		a.Implements = append(a.Implements, ant.Implements...)

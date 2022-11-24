@@ -515,7 +515,15 @@ func (p *PaginationNames) OrderInputDef() *ast.Definition {
 	}
 }
 
-func (p *PaginationNames) ConnectionField(name string, hasOrderBy, hasWhereInput bool) *ast.FieldDefinition {
+func (p *PaginationNames) ConnectionField(name string, hasOrderBy, hasWhereInput bool, defaultFirst, limit *int) *ast.FieldDefinition {
+	firstDescription := "Returns the first _n_ elements from the list."
+	lastDescription := "Returns the last _n_ elements from the list."
+
+	if defaultFirst != nil && limit != nil {
+		firstDescription += fmt.Sprintf(" Defaults to %d if last is not specified. Maximum value: %d.", *defaultFirst, *limit)
+		lastDescription += fmt.Sprintf(" Maximum value: %d.", *limit)
+	}
+
 	def := &ast.FieldDefinition{
 		Name: name,
 		Type: ast.NonNullNamedType(p.Connection, nil),
@@ -528,7 +536,7 @@ func (p *PaginationNames) ConnectionField(name string, hasOrderBy, hasWhereInput
 			{
 				Name:        "first",
 				Type:        ast.NamedType("Int", nil),
-				Description: "Returns the first _n_ elements from the list.",
+				Description: firstDescription,
 			},
 			{
 				Name:        "before",
@@ -538,7 +546,7 @@ func (p *PaginationNames) ConnectionField(name string, hasOrderBy, hasWhereInput
 			{
 				Name:        "last",
 				Type:        ast.NamedType("Int", nil),
-				Description: "Returns the last _n_ elements from the list.",
+				Description: lastDescription,
 			},
 		},
 	}

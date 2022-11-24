@@ -56,10 +56,29 @@ func ({{ $receiver }} *{{ $query }}) collectField(ctx context.Context, op *graph
 							{{- $tnames := nodePaginationNames $e.Type }}
 							{{- $tname := $tnames.Node }}
 							{{- $edgeArgsFunc := print "new" $tname "PaginateArgs" }}
-							args := {{ $edgeArgsFunc }}(fieldArgs(ctx, {{ if and (hasTemplate "gql_where_input") (hasWhereInput $e) }}new({{ $tnames.WhereInput }}){{ else }}nil{{ end }}, path...))
+							args := {{ $edgeArgsFunc }}(fieldArgs(ctx, {{ if and (hasTemplate "gql_where_input") (hasWhereInput $e) }}new({{ $tnames.WhereInput }}){{ else }}nil{{ end }}, path...))				
 							if err := validateFirstLast(args.first, args.last); err != nil {
 								return fmt.Errorf("validate first and last in path %q: %w", path, err)
 							}
+
+							{{/* Add additional check if RelayPaginationConfig is enabled */}}
+							{{/* First check if either first or lasts exceeds .Limit */}}
+							{{/* Assign .DefaultFirst to first if both first and last are nil */}}
+							{{ with  $e.Annotations.EntGQL.RelayPaginationConfig }}
+
+							{{ if .Limit }}
+							if err := validateFirstLastMax(args.first, args.last, {{ .Limit }}); err != nil {
+								return err
+							}
+							{{ end }}
+							{{ if .DefaultFirst }}
+							if (args.first == nil && args.last == nil) {
+									args.first = new(int)
+									*args.first = {{ .DefaultFirst }}
+							}
+							{{ end }}
+							{{ end }}
+
 							{{- $newPager := print "new" $tname "Pager" }}
 							pager, err := {{ $newPager }}(args.opts)
 							if err != nil {

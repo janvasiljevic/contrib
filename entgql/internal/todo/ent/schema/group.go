@@ -53,5 +53,6 @@ func (Group) Annotations() []schema.Annotation {
 		entgql.Directives(
 			annotation.HasPermissions([]string{"ADMIN", "MODERATOR"}),
 		),
+		entgql.RelayPaginationConfig(10, 50), // Limit the pagination to max 50 items. Default number of returned items is 10.
 	}
 }

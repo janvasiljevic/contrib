@@ -212,7 +212,17 @@ func (e *schemaGenerator) buildTypes(g *gen.Graph, s *ast.Schema) error {
 					_, hasOrderBy := s.Types[names.Order]
 					hasWhereInput := e.genWhereInput && !ant.Skip.Is(SkipWhereInput)
 
-					def := names.ConnectionField(name, hasOrderBy, hasWhereInput)
+					defaultFirstPagination := ant.RelayPaginationConfig.DefaultFirst
+					limitPagination := ant.RelayPaginationConfig.Limit
+
+					if limitPagination != nil && defaultFirstPagination != nil {
+						if (*limitPagination) < (*defaultFirstPagination) {
+							return fmt.Errorf("entgql.RelayPaginationConfig.Limit cannot be less than entgql.RelayPaginationConfig.DefaultFirst. On node %q (%d > %d)",
+								node.Name, *limitPagination, *defaultFirstPagination)
+						}
+					}
+
+					def := names.ConnectionField(name, hasOrderBy, hasWhereInput, defaultFirstPagination, limitPagination)
 					def.Description = ant.QueryField.Description
 					def.Directives = e.buildDirectives(ant.QueryField.Directives)
 					queryFields = append(queryFields, def)
@@ -449,9 +459,21 @@ func (e *schemaGenerator) buildEdge(node *gen.Type, edge *gen.Edge, edgeAnt *Ann
 				return nil, fmt.Errorf("entgql.RelayConnection() must be set on entity %q in order to define %q.%q as Relay Connection", edge.Type.Name, node.Name, edge.Name)
 			}
 
+			defaultFirstPagination := edgeAnt.RelayPaginationConfig.DefaultFirst
+			limitPagination := edgeAnt.RelayPaginationConfig.Limit
+
+			if limitPagination != nil && defaultFirstPagination != nil {
+				if (*limitPagination) < (*defaultFirstPagination) {
+					return nil, fmt.Errorf("entgql.RelayPaginationConfig.Limit cannot be less than entgql.RelayPaginationConfig.DefaultFirst. On edge %q.%q (%d > %d)",
+						node.Name, edge.Name, *limitPagination, *defaultFirstPagination)
+				}
+			}
+
 			fieldDef = paginationNames(gqlType).
 				ConnectionField(name, len(orderFields) > 0,
 					e.genWhereInput && !edgeAnt.Skip.Is(SkipWhereInput) && !ant.Skip.Is(SkipWhereInput),
+					defaultFirstPagination,
+					limitPagination,
 				)
 		default:
 			fieldDef.Type = listNamedType(gqlType, edge.Optional)

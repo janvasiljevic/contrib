@@ -186,6 +186,19 @@ func validateFirstLast(first, last *int) (err *gqlerror.Error) {
 	return err
 }
 
+func validateFirstLastMax(first, last *int, max int) (err *gqlerror.Error) {
+	switch {
+	{{- range $arg := list "first" "last" }}
+		case {{ $arg }} != nil && *{{ $arg }} > max:
+		err = &gqlerror.Error{
+		Message: fmt.Sprintf("`{{ $arg }}` on a connection cannot exceed %d.", max),
+		}
+		errcode.Set(err, errInvalidPagination)
+	{{- end }}
+	}
+	return err
+}
+
 func collectedField(ctx context.Context, path ...string) *graphql.CollectedField {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
@@ -514,6 +527,25 @@ func ({{ $r }} *{{ $name }}) ToEdge(order *{{ $order }}) *{{ $edge }} {
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+	{{/* Add additional check if RelayPaginationConfig is enabled */}}
+	{{ with $node.Annotations.EntGQL.RelayPaginationConfig }}
+	
+	{{/* First check if either first or lasts exceeds .Limit */}}
+	{{ if .Limit }}
+	if err := validateFirstLastMax(first, last, {{ .Limit }}); err != nil {
+		return nil, err
+	}
+	{{ end }}
+
+	{{/* Assign .DefaultFirst to first if both first and last are nil */}}
+	{{ if .DefaultFirst }}
+	if (first == nil && last == nil) {
+			first = new(int)
+			*first = {{ .DefaultFirst }}
+	}
+	{{ end }}
+	{{ end }}
+
 	pager, err := {{ $newPager }}(opts)
 	if err != nil {
 		return nil, err

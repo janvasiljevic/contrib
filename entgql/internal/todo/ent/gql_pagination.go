@@ -216,6 +216,22 @@ func validateFirstLast(first, last *int) (err *gqlerror.Error) {
 	return err
 }
 
+func validateFirstLastMax(first, last *int, max int) (err *gqlerror.Error) {
+	switch {
+	case first != nil && *first > max:
+		err = &gqlerror.Error{
+			Message: fmt.Sprintf("`first` on a connection cannot exceed %d.", max),
+		}
+		errcode.Set(err, errInvalidPagination)
+	case last != nil && *last > max:
+		err = &gqlerror.Error{
+			Message: fmt.Sprintf("`last` on a connection cannot exceed %d.", max),
+		}
+		errcode.Set(err, errInvalidPagination)
+	}
+	return err
+}
+
 func collectedField(ctx context.Context, path ...string) *graphql.CollectedField {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
@@ -415,6 +431,7 @@ func (bp *BillProductQuery) Paginate(
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+
 	pager, err := newBillProductPager(opts)
 	if err != nil {
 		return nil, err
@@ -646,6 +663,7 @@ func (c *CategoryQuery) Paginate(
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+
 	pager, err := newCategoryPager(opts)
 	if err != nil {
 		return nil, err
@@ -934,6 +952,7 @@ func (f *FriendshipQuery) Paginate(
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+
 	pager, err := newFriendshipPager(opts)
 	if err != nil {
 		return nil, err
@@ -1165,6 +1184,16 @@ func (gr *GroupQuery) Paginate(
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+
+	if err := validateFirstLastMax(first, last, 50); err != nil {
+		return nil, err
+	}
+
+	if first == nil && last == nil {
+		first = new(int)
+		*first = 10
+	}
+
 	pager, err := newGroupPager(opts)
 	if err != nil {
 		return nil, err
@@ -1396,6 +1425,7 @@ func (t *TodoQuery) Paginate(
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+
 	pager, err := newTodoPager(opts)
 	if err != nil {
 		return nil, err
@@ -1712,6 +1742,7 @@ func (u *UserQuery) Paginate(
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
+
 	pager, err := newUserPager(opts)
 	if err != nil {
 		return nil, err

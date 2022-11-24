@@ -41,8 +41,9 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
+		// Limit the pagination to max 50 items. Default number of returned items is 25.
 		edge.To("groups", Group.Type).
-			Annotations(entgql.RelayConnection()),
+			Annotations(entgql.RelayConnection(), entgql.RelayPaginationConfig(25, 50)),
 		edge.To("friends", User.Type).
 			Through("friendships", Friendship.Type).
 			Annotations(entgql.RelayConnection()),

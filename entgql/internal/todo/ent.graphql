@@ -390,13 +390,13 @@ type Query {
     """Returns the elements in the list that come after the specified cursor."""
     after: Cursor
 
-    """Returns the first _n_ elements from the list."""
+    """Returns the first _n_ elements from the list. Defaults to 10 if last is not specified. Maximum value: 50."""
     first: Int
 
     """Returns the elements in the list that come before the specified cursor."""
     before: Cursor
 
-    """Returns the last _n_ elements from the list."""
+    """Returns the last _n_ elements from the list. Maximum value: 50."""
     last: Int
 
     """Filtering options for Groups returned from the connection."""
@@ -639,13 +639,13 @@ type User implements Node {
     """Returns the elements in the list that come after the specified cursor."""
     after: Cursor
 
-    """Returns the first _n_ elements from the list."""
+    """Returns the first _n_ elements from the list. Defaults to 25 if last is not specified. Maximum value: 50."""
     first: Int
 
     """Returns the elements in the list that come before the specified cursor."""
     before: Cursor
 
-    """Returns the last _n_ elements from the list."""
+    """Returns the last _n_ elements from the list. Maximum value: 50."""
     last: Int
 
     """Filtering options for Groups returned from the connection."""
